@@ -28,8 +28,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 using Microsoft.Msagl.Core.DataStructures;
 using Edge = Microsoft.Msagl.Core.Layout.Edge;
-#if TEST_MSAGL || DEVTRACE
 using System;
+#if TEST_MSAGL
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;

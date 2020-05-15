@@ -1,9 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using Microsoft.Msagl.Core.DataStructures;
 using Microsoft.Msagl.Core.Geometry;
 using Microsoft.Msagl.Core.Geometry.Curves;
 using Microsoft.Msagl.Core.Layout;
 using Microsoft.Msagl.Routing.Visibility;
+using LineSegment = Microsoft.Msagl.Core.Geometry.Curves.LineSegment;
 
 namespace Microsoft.Msagl.Layout.LargeGraphLayout {
 
@@ -12,7 +15,16 @@ namespace Microsoft.Msagl.Layout.LargeGraphLayout {
     /// keeps a part of EdgeGeometry which is visible
     /// </summary>
     public class Rail {
-
+        public Point A;
+        public Point B;
+        public Point targetA;
+        public Point targetB;
+        public Point initialA;
+        public Point initialB;
+        public Point Left;
+        public Point Right;
+        public int Weight = 1;
+       // public List<int> unnecessaryTransfer = new List<int>();
 #if DEBUG
         static int railCount;
         int id;
@@ -48,7 +60,8 @@ namespace Microsoft.Msagl.Layout.LargeGraphLayout {
             set { _isUsedOnPreviousLevel = value; }
         }
 
-        internal int ZoomLevel;
+        public int ZoomLevel;
+        public List<object> Color;
 #if DEBUG
         Rail() {
             railCount++;
@@ -164,7 +177,7 @@ namespace Microsoft.Msagl.Layout.LargeGraphLayout {
             if (TopRankedEdgeInfoOfTheRail == null || TopRankedEdgeInfoOfTheRail.Rank < ei.Rank)
                 TopRankedEdgeInfoOfTheRail = ei;
 
-            MinPassingEdgeZoomLevel = Math.Min(MinPassingEdgeZoomLevel, ei.ZoomLevel);
+            MinPassingEdgeZoomLevel = 1+Math.Min(MinPassingEdgeZoomLevel, ei.ZoomLevel);
         }
 
         public LgEdgeInfo GetTopEdgeInfo()

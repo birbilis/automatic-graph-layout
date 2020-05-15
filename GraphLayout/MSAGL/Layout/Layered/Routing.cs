@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -72,20 +73,25 @@ namespace Microsoft.Msagl.Layout.Layered {
             Parallel.ForEach<List<IntEdge>>(this.Database.RegularMultiedges, options, (intEdgeList) =>
             {
 #else
-            foreach (var intEdgeList in Database.RegularMultiedges) {
+foreach (var intEdgeList in Database.RegularMultiedges) {
 #endif
                 //Here we try to optimize multi-edge routing
                 int m = intEdgeList.Count;
-                for (int i = m / 2; i < m; i++) CreateSplineForNonSelfEdge(intEdgeList[i]);
+                bool optimizeShortEdges = m == 1 && !FanAtSourceOrTarget(intEdgeList[0]);
+                for (int i = m / 2; i < m; i++) CreateSplineForNonSelfEdge(intEdgeList[i], optimizeShortEdges);
 #if SHARPKIT // https://github.com/SharpKit/SharpKit/issues/4
-                for (int i = (m / 2) - 1; i >= 0; i--) CreateSplineForNonSelfEdge(intEdgeList[i]);
+                for (int i = (m / 2) - 1; i >= 0; i--) CreateSplineForNonSelfEdge(intEdgeList[i], optimizeShortEdges);
 #else
-                for (int i = m / 2 - 1; i >= 0; i--) CreateSplineForNonSelfEdge(intEdgeList[i]);
+                for (int i = m / 2 - 1; i >= 0; i--) CreateSplineForNonSelfEdge(intEdgeList[i], optimizeShortEdges);
 #endif
             }
 #if PPC
 );
 #endif
+        }
+
+        private bool FanAtSourceOrTarget(IntEdge intEdge) {
+            return ProperLayeredGraph.OutDegreeIsMoreThanOne(intEdge.Source) || ProperLayeredGraph.InDegreeIsMoreThanOne(intEdge.Target);
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA1806:DoNotIgnoreMethodResults", MessageId = "Microsoft.Msagl.Core.Geometry.Site")]
@@ -140,27 +146,26 @@ namespace Microsoft.Msagl.Layout.Layered {
                 }
             }
         }
-        void CreateSplineForNonSelfEdge(IntEdge es){
+        void CreateSplineForNonSelfEdge(IntEdge es, bool optimizeShortEdges) {
             this.ProgressStep();
 
-            if (es.LayerEdges != null)
-            {
-                DrawSplineBySmothingThePolyline(es);
+            if (es.LayerEdges != null) {
+                DrawSplineBySmothingThePolyline(es, optimizeShortEdges);
                 if (!es.IsVirtualEdge)
                 {
                     es.UpdateEdgeLabelPosition(Database.Anchors);
                     Arrowheads.TrimSplineAndCalculateArrowheads(es.Edge.EdgeGeometry, es.Edge.Source.BoundaryCurve,
-                                                                     es.Edge.Target.BoundaryCurve, es.Curve, true, 
+                                                                     es.Edge.Target.BoundaryCurve, es.Curve, true,
                                                                      settings.EdgeRoutingSettings.KeepOriginalSpline);
                 }
             }
         }
 
-        void DrawSplineBySmothingThePolyline(IntEdge edgePath) {
+        void DrawSplineBySmothingThePolyline(IntEdge edgePath, bool optimizeShortEdges) {
             var smoothedPolyline = new SmoothedPolylineCalculator(edgePath, Database.Anchors, OriginalGraph, settings,
                                                                   LayerArrays,
                                                                   ProperLayeredGraph, Database);
-            ICurve spline = smoothedPolyline.GetSpline();
+            ICurve spline = smoothedPolyline.GetSpline(optimizeShortEdges);
             if (edgePath.Reversed) {
                 edgePath.Curve = spline.Reverse();
                 edgePath.UnderlyingPolyline = smoothedPolyline.Reverse().GetPolyline;

@@ -64,21 +64,6 @@ namespace Microsoft.Msagl.Drawing {
             set { layoutAlgorithm = value; }
         }
 
-        static void WriteNodeCollection(TextWriter sw, IEnumerable nodeLabels) {
-            int i = 0;
-
-            sw.Write(" ");
-
-            foreach (string s in nodeLabels) {
-                sw.Write(s);
-                sw.Write(" ");
-                i = (i + 1)%6;
-
-                if (i == 0)
-                    sw.WriteLine("");
-            }
-        }
-
         void WriteNodes(TextWriter sw) {
             sw.WriteLine("//nodes");
             foreach (Node node in nodeMap.Values)
@@ -95,7 +80,7 @@ namespace Microsoft.Msagl.Drawing {
         public override string ToString() {
             var sw = new StringWriter();
 
-            sw.WriteLine("digraph \"" + Label + "\" {");
+            sw.WriteLine("digraph \"" + (string.IsNullOrEmpty(Label.Text)? "noname":Label.Text) + "\" {");
 
             WriteStms(sw);
 
@@ -109,7 +94,7 @@ namespace Microsoft.Msagl.Drawing {
 
         void WriteEdges(TextWriter tw) {
             foreach (Edge edge in Edges) {
-                tw.WriteLine(edge.ToString());
+                tw.WriteLine(edge.ToDotGeometry());
             }
         }
 
@@ -220,15 +205,8 @@ namespace Microsoft.Msagl.Drawing {
             Subgraph subgraph;
             if (SubgraphMap.TryGetValue(nodeId, out subgraph))
                 return subgraph;
-#if SILVERLIGHT
-            object obj;
-            nodeMap.TryGetValue(nodeId, out obj);
-            if(obj!=null)
-                ret = (Node) obj;
-            else ret = null;
-#else
+
             ret = nodeMap[nodeId] as Node;
-#endif
             if (ret == null) {
                 ret = new Node(nodeId);
                 nodeMap[nodeId] = ret;
@@ -567,7 +545,7 @@ namespace Microsoft.Msagl.Drawing {
             set { GeometryGraph = (GeometryGraph) value; }
         }
             
-#if TEST_MSAGL && !SILVERLIGHT
+#if TEST_MSAGL
         ///<summary>
         ///</summary>
         public List<ICurve> DebugICurves {

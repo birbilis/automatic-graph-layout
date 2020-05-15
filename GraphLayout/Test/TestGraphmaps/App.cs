@@ -130,8 +130,6 @@ namespace TestGraphmaps {
         string _lastFileName;
         static ArgsParser.ArgsParser _argsParser;
         TextBox _statusTextBox;
-        Timer _fileListTimer;
-        const int FileListDelay = 8000;
         string _currentFileNameFromList;
         //RangeSlider edgeRangeSlider;
 
@@ -173,7 +171,7 @@ namespace TestGraphmaps {
                 Title = "Graphmaps browser",
                 Width = SystemParameters.WorkArea.Width - 300,
                 Height = SystemParameters.WorkArea.Height,
-                GraphViewer=_graphViewer,
+                GraphViewer=_graphViewer,                
                 //Content = dockPanel,
                 //WindowStartupLocation = WindowStartupLocation.CenterScreen,
                 //WindowState = WindowState.Normal
@@ -197,7 +195,7 @@ namespace TestGraphmaps {
             _argsParser = SetArgsParser(Args);
 
             if (_argsParser.OptionIsUsed(BackgroundColorOption)) {
-                var bc = _argsParser.GetValueOfOptionWithAfterString(BackgroundColorOption);
+                var bc = _argsParser.GetStringOptionValue(BackgroundColorOption);
                 _graphViewerPanel.Background = (SolidColorBrush)(new BrushConverter().ConvertFrom(bc));
             }
 
@@ -238,76 +236,6 @@ namespace TestGraphmaps {
 //                PopupMenus(CreatePopupMenu());
 //                e.Handled = true;
 //            }
-        }
-
-
-        Microsoft.Msagl.Core.Geometry.Point MousePositionToGraph() {
-            var pos = Mouse.GetPosition(_graphViewer.GraphCanvas);
-            return new Microsoft.Msagl.Core.Geometry.Point(pos.X, pos.Y);
-        }
-
-        Node CreateDrawingNodeByUsingDialog() {
-            RichTextBox richBox;
-            var window = CreateNodeDialog(out richBox);
-            window.ShowDialog();
-
-            var r = new Random();
-            var i = r.Next();
-
-            var createdNode = new Node(i.ToString());
-            var s = new TextRange(richBox.Document.ContentStart, richBox.Document.ContentEnd).Text;
-            createdNode.LabelText = s.Trim('\r', '\n', ' ', '\t');
-            return createdNode;
-        }
-
-        Window CreateNodeDialog(out RichTextBox richBox) {
-            var window = new Window {Width = 200, Height = 200};
-            var mp = Mouse.GetPosition(_dockPanel);
-            window.Left = mp.X;
-            window.Top = mp.Y;
-            var panel = new DockPanel();
-
-            window.Content = panel;
-
-            var textBox = new TextBox {Text = "Please modify the node label:"};
-
-            DockPanel.SetDock(textBox, Dock.Top);
-            panel.Children.Add(textBox);
-
-            richBox = new RichTextBox();
-            richBox.FontSize *= 1.5;
-            richBox.AppendText("Label");
-            richBox.FontFamily = new FontFamily("Consoles");
-            richBox.Width = window.Width;
-            DockPanel.SetDock(richBox, Dock.Top);
-            panel.Children.Add(richBox);
-            panel.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-            panel.Width = textBox.Width;
-            var button = new Button {Content = "OK"};
-            button.Click += (a, b) => window.Close();
-            DockPanel.SetDock(button, Dock.Bottom);
-            button.IsDefault = true;
-            button.Width = 40;
-            button.Height = 40;
-            panel.Children.Add(button);
-            panel.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-            window.SizeToContent = SizeToContent.WidthAndHeight;
-            return window;
-        }
-
-
-        Tuple<string, VoidDelegate>[] ChangeColorDialog(AttributeBase attr) {
-            return new[] {ColorChangeMenuTuple(attr)};
-        }
-
-        static Tuple<string, VoidDelegate> ColorChangeMenuTuple(AttributeBase attr) {
-            return new Tuple<string, VoidDelegate>("set color", () => {
-                var dialog = new ColorDialog();
-                if (dialog.ShowDialog() == DialogResult.OK) {
-                    var color = dialog.Color;
-                    attr.Color = new Color(color.A, color.R, color.G, color.B);
-                }
-            });
         }
 
         public static object CreateMenuItem(string title, VoidDelegate voidVoidDelegate) {
@@ -362,7 +290,7 @@ namespace TestGraphmaps {
             }
             if (_argsParser.OptionIsUsed("-no_tiles"))
                 _graphViewer.DefaultLargeLayoutSettings.GenerateTiles = false;
-            string labelH = _argsParser.GetValueOfOptionWithAfterString("-labelH");
+            string labelH = _argsParser.GetStringOptionValue("-labelH");
             if (labelH != null) {
                 double h;
                 if (double.TryParse(labelH, out h)) {
@@ -377,7 +305,7 @@ namespace TestGraphmaps {
         }
 
         void CheckRailColors() {
-            string railColors = _argsParser.GetValueOfOptionWithAfterString(RailColorsOption);
+            string railColors = _argsParser.GetStringOptionValue(RailColorsOption);
             if (railColors != null)
             {
                 _graphViewer.DefaultLargeLayoutSettings.RailColors = railColors.Split(',');
@@ -385,14 +313,14 @@ namespace TestGraphmaps {
         }
 
         void CheckSelectionColors() {
-            string selColors = _argsParser.GetValueOfOptionWithAfterString(SelectionColorsOption);
+            string selColors = _argsParser.GetStringOptionValue(SelectionColorsOption);
             if (selColors != null) {
                 _graphViewer.DefaultLargeLayoutSettings.SelectionColors = selColors.Split(',');
             }
         }
 
         void CheckRailQuota() {
-            string railQuota = _argsParser.GetValueOfOptionWithAfterString("-rt");
+            string railQuota = _argsParser.GetStringOptionValue("-rt");
             if (railQuota != null) {
                 int n;
                 if (Int32.TryParse(railQuota, out n))
@@ -403,7 +331,7 @@ namespace TestGraphmaps {
         }
         void CheckNodeQuota()
         {
-            string nodeQuota = _argsParser.GetValueOfOptionWithAfterString(NodeQuotaOption);
+            string nodeQuota = _argsParser.GetStringOptionValue(NodeQuotaOption);
             if (nodeQuota != null)
             {
                 int n;
@@ -414,7 +342,7 @@ namespace TestGraphmaps {
             }
         }
         void CheckIncreaseNodeQuota() {
-            string incrNodeQuota = _argsParser.GetValueOfOptionWithAfterString(IncreaseNodeQuotaOption);
+            string incrNodeQuota = _argsParser.GetStringOptionValue(IncreaseNodeQuotaOption);
             if (incrNodeQuota != null) {
                 double inq;
                 if (Double.TryParse(incrNodeQuota, out inq))
@@ -462,11 +390,11 @@ namespace TestGraphmaps {
         void GraphViewerLoaded(object sender, EventArgs e) {
             if (_graphViewerIsLoaded) return;
             _graphViewerIsLoaded = true;
-            string fileName = _argsParser.GetValueOfOptionWithAfterString(FileOption);
+            string fileName = _argsParser.GetStringOptionValue(FileOption);
             if (fileName != null)
                 CreateAndLayoutGraph(fileName);
             else {
-                string fileList = _argsParser.GetValueOfOptionWithAfterString(FileListOption);
+                string fileList = _argsParser.GetStringOptionValue(FileListOption);
                 if (fileList != null)
                     ProcessFileList(fileList);
             }
@@ -495,21 +423,6 @@ namespace TestGraphmaps {
             catch (Exception e) {
                 Console.WriteLine(e.Message);
             }
-        }
-
-        bool SetupNextRun(StreamReader sr, string fileListDir) {
-            _currentFileNameFromList = ReadNextFileName(sr, fileListDir);
-            if (_currentFileNameFromList == null) {
-                sr.Close();
-                return false;
-            }
-            _fileListTimer = new Timer(FileListDelay);
-            _fileListTimer.Elapsed += (c, d) => {
-                _fileListTimer.Stop();
-                CreateAndLayoutGraph(_currentFileNameFromList);
-            };
-            _fileListTimer.Start();
-            return true;
         }
 
         string ReadNextFileName(StreamReader sr, string fileListDir) {
@@ -696,14 +609,6 @@ namespace TestGraphmaps {
             lgSettings.Interactor.RunMds();
         }
 
-        void InitEdgesOfLevels(object sender, ExecutedRoutedEventArgs e) {
-            LgLayoutSettings lgSettings;
-            if (!GetLgSettings(out lgSettings)) return;
-            lgSettings.Interactor.InitEdgesOfLevels();
-        }
-
-        
-        
         void SimplifyRoutes(object sender, ExecutedRoutedEventArgs e) {
             LgLayoutSettings lgSettings;
             int iLevel;
@@ -852,7 +757,7 @@ namespace TestGraphmaps {
                         n.Attr.XRadius = n.Attr.YRadius = 3;
 
                 if (_argsParser.OptionIsUsed(RunRemoveOverlapsOption)) {
-                    OverlapRemoval.RemoveOverlaps(graph.GeometryGraph.Nodes.ToArray(),
+                    GTreeOverlapRemoval.RemoveOverlaps(graph.GeometryGraph.Nodes.ToArray(),
                         graph.LayoutAlgorithmSettings.NodeSeparation);
                 }
             }
@@ -936,21 +841,26 @@ namespace TestGraphmaps {
                 MessageBox.Show("cannot load " + fileName);
         }
 
-        void ProcessDot(string fileName) {
+        bool ProcessDot(string fileName)
+        {
             int line, column;
             string msg;
             Graph gwgraph = Parser.Parse(fileName, out line, out column, out msg);
 
             Debug.Assert(NodeMapOfGraphIsOk(gwgraph));
 
-            if (gwgraph != null && (gwgraph.NodeCount > 0 || gwgraph.EdgeCount > 0)) {
+            if (gwgraph != null && (gwgraph.NodeCount > 0 || gwgraph.EdgeCount > 0))
+            {
                 PassGraphToGraphViewer(gwgraph, fileName);
+                return true;
             }
-            else 
-                Console.WriteLine("Cannot parse {3} {2} line {0} column {1}", line, column, msg, fileName);
+            Console.WriteLine("Cannot parse {3} {2} line {0} column {1}", line, column, msg, fileName);
+            return false;
         }
 
-        void SaveMsaglAndTiles(string fileName) {
+        void SaveMsaglAndTiles(string fileName)
+        {
+            if (_graphViewer.Graph == null) return;
             string rootName = FileNameWithoutExtension(fileName);
             string msaglFileName = rootName + ".msagl";
             Console.WriteLine("saving to {0}", msaglFileName);
@@ -991,7 +901,7 @@ namespace TestGraphmaps {
                         ProximityOverlapRemoval.RemoveOverlaps(compGraph, gwgraph.LayoutAlgorithmSettings.NodeSeparation);
                         break;
                     case OverlapRemovalMethod.MinimalSpanningTree:
-                        OverlapRemoval.RemoveOverlaps(compGraph.Nodes.ToArray(),
+                        GTreeOverlapRemoval.RemoveOverlaps(compGraph.Nodes.ToArray(),
                             gwgraph.LayoutAlgorithmSettings.NodeSeparation);
                         break;
                     default:
@@ -1036,7 +946,7 @@ namespace TestGraphmaps {
             else if (mdsIsUsed)
                 gwgraph.LayoutAlgorithmSettings = GetMdsLayoutSettings();
             if (_argsParser.OptionIsUsed(NodeSeparationOption)) {
-                var ns = double.Parse(_argsParser.GetValueOfOptionWithAfterString(NodeSeparationOption));
+                var ns = double.Parse(_argsParser.GetStringOptionValue(NodeSeparationOption));
                 if (ns != 0)
                     gwgraph.LayoutAlgorithmSettings.NodeSeparation = ns;
             }

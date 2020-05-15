@@ -8,21 +8,17 @@ namespace Microsoft.Msagl.Core.DataStructures {
     /// </summary>
     /// <typeparam name="T"></typeparam>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1710:IdentifiersShouldHaveCorrectSuffix"), System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1716:IdentifiersShouldNotMatchKeywords", MessageId = "Set")]
-#if SILVERLIGHT
-    public class Set<T> : ICollection<T> {
-#else
     public class Set<T> : MarshalByRefObject, ICollection<T> {
-#endif
         HashSet<T> hashSet = new HashSet<T>();
-        internal HashSet<T> HashSet {
-            get { return this.hashSet; }
-        }
         /// <summary>
         /// inserts an element into the set
         /// </summary>
         /// <param name="element"></param>
         public void Insert(T element) {
             hashSet.Add(element);
+#if SHARPKIT
+            UpdateHashKey();
+#endif
         }
         void System.Collections.Generic.ICollection<T>.Add(T t) { Insert(t); }
         /// <summary>
@@ -35,13 +31,24 @@ namespace Microsoft.Msagl.Core.DataStructures {
         /// deletes the element from the set
         /// </summary>
         /// <param name="item"></param>
-        public void Delete(T item) { hashSet.Remove(item); }
+        public void Delete(T item) {
+            hashSet.Remove(item);
+#if SHARPKIT
+            UpdateHashKey();
+#endif
+        }
         /// <summary>
         /// deletes the element from the set
         /// </summary>
         /// <param name="item"></param>
         /// <returns></returns>
-        public bool Remove(T item) { return hashSet.Remove(item); }
+        public bool Remove(T item) {
+            var ret = hashSet.Remove(item);
+#if SHARPKIT
+            UpdateHashKey();
+#endif
+            return ret;
+        }
         /// <summary>
         /// returns the number elements in the set
         /// </summary>
@@ -97,6 +104,9 @@ namespace Microsoft.Msagl.Core.DataStructures {
         /// </summary>
         public void Clear() {
             this.hashSet.Clear();
+#if SHARPKIT
+            UpdateHashKey();
+#endif
         }
         /// <summary>
         /// clones the set
@@ -118,6 +128,9 @@ namespace Microsoft.Msagl.Core.DataStructures {
             ValidateArg.IsNotNull(enumerableCollection, "enumerableCollection");
             foreach (T j in enumerableCollection)
                 this.Insert(j);
+#if SHARPKIT
+            UpdateHashKey();
+#endif
         }
 
         /// <summary>
@@ -275,5 +288,13 @@ namespace Microsoft.Msagl.Core.DataStructures {
         ///<param name="otherSet"></param>
         ///<returns></returns>
         public bool Contains(Set<T> otherSet) { return otherSet.All(p => Contains(p)); }
+
+#if SHARPKIT //https://code.google.com/p/sharpkit/issues/detail?id=289
+        private SharpKit.JavaScript.JsString _hashKey;
+        private void UpdateHashKey()
+        {
+            _hashKey = GetHashCode().ToString();
+        }
+#endif
     }
 }

@@ -52,7 +52,6 @@ namespace Microsoft.Msagl.GraphViewerGdi{
     /// Summary description for DOTViewer.
     /// </summary>
     partial class GViewer : IViewer{
-        const int ScrollMax = 0xFFFF;
         const string windowZoomButtonDisabledToolTipText = "Zoom in by dragging a rectangle, is disabled now";
         internal static double Dpi = GetDotsPerInch();
         internal static double dpix;
@@ -122,22 +121,7 @@ namespace Microsoft.Msagl.GraphViewerGdi{
             ResumeLayout();          
         }
 
-        /// <summary>
-        /// Sets or gets the fraction on which the zoom value changes in every zoom out or zoom in
-        /// </summary>
-        public double ZoomFraction{
-            get { return zoomFraction; }
-            set{
-                if (value > 0.9)
-                    value = 0.9f;
-                else if (value < 0.0001)
-                    value = 0.0001f;
-                zoomFraction = value;
-            }
-        }
-
-        internal double LocalScale { get; set; }
-
+      
 
         /*
          * (s, 0,a)(srcRect.X)= (destRect.Left,destRect.Top)
@@ -284,14 +268,7 @@ namespace Microsoft.Msagl.GraphViewerGdi{
             }
         }
 
-        /// <summary>
-        /// Enables or disables zoom in/out when mouse wheel scrool.
-        /// </summary>
-        public bool ZoomWhenMouseWheelScroll{
-            get { return zoomWhenMouseWheelScroll; }
-            set { zoomWhenMouseWheelScroll = value; }
-        }
-
+        
         /// <summary>
         /// If this property is set to true the control enables saving and loading of .MSAGL files
         /// Otherwise the "Load file" button and saving as .MSAGL file is disabled.
@@ -375,7 +352,6 @@ namespace Microsoft.Msagl.GraphViewerGdi{
 
         const int minimalSizeToDraw = 10;
 
-        Brush imageBackgroungBrush = Brushes.White;
         readonly ViewInfosList listOfViewInfos = new ViewInfosList();
         System.Drawing.Point mousePositonWhenSetSelectedObject;
         internal Cursor originalCursor;
@@ -424,9 +400,6 @@ namespace Microsoft.Msagl.GraphViewerGdi{
         //public static double LocationToFloat(string location) { return LocationToFloat(Int32.Parse(location)); }
 
 
-        internal bool DestRectContainsPoint(System.Drawing.Point p){
-            return destRect.Contains(p);
-        }
 
         #endregion
 
@@ -449,7 +422,9 @@ namespace Microsoft.Msagl.GraphViewerGdi{
         /// <summary>
         /// 
         /// </summary>
+#pragma warning disable 67
         public event EventHandler<EventArgs> ViewChangeEvent;
+#pragma warning restore 67
 
         /// <summary>
         /// enables and disables the default editing of the viewer
@@ -473,14 +448,6 @@ namespace Microsoft.Msagl.GraphViewerGdi{
 
         #endregion
 
-        
-
-        
-        
-        void ZoomWithOne(){
-            
-        }
-
         void CalcDestRect() {
             var lt = Transform*new Point(srcRect.Left, srcRect.Bottom);
             destRect.X = (int) lt.X;
@@ -488,18 +455,6 @@ namespace Microsoft.Msagl.GraphViewerGdi{
             destRect.Width = (int) (CurrentScale*srcRect.Width);
             destRect.Height = (int) (CurrentScale*srcRect.Height);
         }
-
-        void GetSizes(out int panelWidth, out int panelHeight, PrintPageEventArgs printPageEvenArgs) {
-            if (printPageEvenArgs == null) {
-                panelWidth = PanelWidth;
-                panelHeight = PanelHeight;
-              
-            } else {
-                panelWidth =  (int) printPageEvenArgs.PageSettings.PrintableArea.Width;
-                panelHeight = (int) printPageEvenArgs.PageSettings.PrintableArea.Height;
-            }
-        }
-
 
         void CalcRects(PrintPageEventArgs printPageEvenArgs) {
             var w = printPageEvenArgs == null ? PanelWidth : printPageEvenArgs.PageBounds.Width;
@@ -561,10 +516,6 @@ namespace Microsoft.Msagl.GraphViewerGdi{
             Cursor = originalCursor;
         }
 
-        void vScrollBar_MouseEnter(object o, EventArgs a){
-            ToolBarMouseMoved(null, null);
-        }
-
         /// <summary>
         /// Tightly fit the bounding box around the graph
         /// </summary>
@@ -617,8 +568,10 @@ namespace Microsoft.Msagl.GraphViewerGdi{
             if (originalGraph == null || panel.ClientRectangle.Width<2 || panel.ClientRectangle.Height<2) return;
             double oldFitFactor = Math.Min(prevPanelClientRectangle.Width/originalGraph.Width, prevPanelClientRectangle.Height/originalGraph.Height);
             var center = new Point(prevPanelClientRectangle.Width / 2.0, prevPanelClientRectangle.Height / 2.0);
-            var centerOnSource = transformation.Inverse * center;
-            SetTransformOnScaleAndCenter(GetFitScale()*CurrentScale/oldFitFactor, centerOnSource);
+            if (transformation != null) {
+                var centerOnSource = transformation.Inverse*center;
+                SetTransformOnScaleAndCenter(GetFitScale()*CurrentScale/oldFitFactor, centerOnSource);
+            }
             prevPanelClientRectangle = panel.ClientRectangle;
             
         }

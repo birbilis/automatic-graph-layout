@@ -6,10 +6,8 @@ namespace Microsoft.Msagl.Drawing {
     /// <summary>
     /// Edge layout attributes.
     /// </summary>
-#if !SILVERLIGHT
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", MessageId = "Attr"), Description("Edge layout attributes."),
     TypeConverterAttribute(typeof(ExpandableObjectConverter))]
-#endif
     [Serializable]
     public sealed class EdgeAttr : AttributeBase {
        
@@ -101,7 +99,7 @@ namespace Microsoft.Msagl.Drawing {
         /// <param name="text"></param>
         /// <returns></returns>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1062:ValidateArgumentsOfPublicMethods"), System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Globalization", "CA1304:SpecifyCultureInfo", MessageId = "System.String.ToLower")]
-        public string ToString(string text) {
+        public string ToStringWithText(string text) {
             string ret = "";
             if (!String.IsNullOrEmpty(text)) {
                 text = text.Replace("\r\n", "\\n");

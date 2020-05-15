@@ -130,11 +130,6 @@ namespace TestForGdi {
             set { generatedGraph = value; }
         }
 
-        internal double ObstaclePadding {
-            get { return 2; }
-            set { throw new NotImplementedException(); }
-        }
-
         public double CornerFitRadius {
             get { return cornerFitRadius; }
             set { cornerFitRadius = value; }
@@ -292,11 +287,8 @@ namespace TestForGdi {
 
 
         internal static Graph CreateDrawingGraphFromFile(string fileName, out int line, out int column, out bool msaglFile) {
-            var sr = new StreamReader(fileName);
-            string dotString = sr.ReadToEnd();
-            sr.Close();
             string msg;
-            var graph= Parser.Parse(dotString, out line, out column, out msg);
+            var graph= Parser.Parse(fileName, out line, out column, out msg);
             if (graph != null) {
                 msaglFile = false;
                 return graph;
@@ -434,9 +426,6 @@ namespace TestForGdi {
                     Label label = n != null ? n.Label : ((Edge) t).Label;
 
                     if (label != null && label.Text.ToLower().Contains(s)) {
-                        double x = 0.8*Math.Min(GViewer.Graph.Width/label.Width, GViewer.Graph.Height/label.Size.Height);
-                        if (GViewer.ZoomF < x)
-                            GViewer.ZoomF = x;
                         GViewer.CenterToGroup(t);
                         searchButton.Text = "Next";
                         textFound = true;
@@ -555,11 +544,6 @@ namespace TestForGdi {
 //                return gViewer.Graph.LayoutAlgorithmSettings.EdgeRoutingSettings.UseSparseVisibilityGraph;
 //            return false;
 //        }
-
-        IEnumerable<ICurve> GetObstacleCurves() {
-            return gViewer.Graph.GeometryGraph.Nodes.Select(n => n.BoundaryCurve);
-        }
-
 
         void RouteEdges() {
             if (gViewer.Graph == null) return;

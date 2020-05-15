@@ -83,12 +83,12 @@ namespace Test01 {
             if (argsParser.OptionIsUsed(AsyncLayoutOption))
                 gviewer.AsyncLayout = true;
 
-            string listOfFilesFile = argsParser.GetValueOfOptionWithAfterString(ListOfFilesOption);
+            string listOfFilesFile = argsParser.GetStringOptionValue(ListOfFilesOption);
             if (listOfFilesFile != null) {
                 ProcessListOfFiles(listOfFilesFile, argsParser);
                 return;
             }
-            string fileName = argsParser.GetValueOfOptionWithAfterString(FileOption);
+            string fileName = argsParser.GetStringOptionValue(FileOption);
             string ext = Path.GetExtension(fileName);
             if (ext != null) {
                 ext = ext.ToLower();
@@ -246,17 +246,6 @@ namespace Test01 {
 
         }
 
-        static void MoveN0ToTheLeft(Node n0, GeometryGraph graph, FastIncrementalLayoutSettings settings) {
-            n0.Center += new Point(-10,0);
-            LockPosition lockPosition = settings.CreateLock(n0,n0.BoundingBox);
-
-            settings.IncrementalRun(graph);
-            RouteEdges(graph,settings);
-            //LayoutAlgorithmSettings.ShowGraph(graph);
-            settings.ClearLocks();
-            settings.RemoveLock(lockPosition);
-        }
-
         static GeometryGraph CreateGeometryGraphForFD() {
             var g = new GeometryGraph();
             
@@ -408,14 +397,14 @@ namespace Test01 {
             if (!argsParser.OptionIsUsed(BundlingOption))
                 return null;
             var bs = new BundlingSettings();
-            string ink = argsParser.GetValueOfOptionWithAfterString(InkImportanceOption);
+            string ink = argsParser.GetStringOptionValue(InkImportanceOption);
             double inkCoeff;
             if (ink != null && double.TryParse(ink, out inkCoeff)) {
                 bs.InkImportance = inkCoeff;
                 BundlingSettings.DefaultInkImportance = inkCoeff;
             }
 
-            string esString = argsParser.GetValueOfOptionWithAfterString(EdgeSeparationOption);
+            string esString = argsParser.GetStringOptionValue(EdgeSeparationOption);
             if (esString != null) {
                 double es;
                 if (double.TryParse(esString, out es)) {
@@ -428,7 +417,7 @@ namespace Test01 {
                 }
             }
 
-            string capacityCoeffString = argsParser.GetValueOfOptionWithAfterString(CapacityCoeffOption);
+            string capacityCoeffString = argsParser.GetStringOptionValue(CapacityCoeffOption);
             if (capacityCoeffString != null) {
                 double capacityCoeff;
                 if (double.TryParse(capacityCoeffString, out capacityCoeff)) {
@@ -477,7 +466,7 @@ namespace Test01 {
                 graph.LayoutAlgorithmSettings.EdgeRoutingSettings.EdgeRoutingMode = EdgeRoutingMode.SplineBundling;
                 BundlingSettings bs = GetBundlingSettings(argsParser);
                 graph.LayoutAlgorithmSettings.EdgeRoutingSettings.BundlingSettings = bs;
-                string ink = argsParser.GetValueOfOptionWithAfterString(InkImportanceOption);
+                string ink = argsParser.GetStringOptionValue(InkImportanceOption);
                 if (ink != null) {
                     double inkCoeff;
                     if (double.TryParse(ink, out inkCoeff)) {
@@ -490,7 +479,7 @@ namespace Test01 {
                     }
                 }
 
-                string esString = argsParser.GetValueOfOptionWithAfterString(EdgeSeparationOption);
+                string esString = argsParser.GetStringOptionValue(EdgeSeparationOption);
                 if (esString != null) {
                     double es;
                     if (double.TryParse(esString, out es)) {
@@ -535,7 +524,7 @@ namespace Test01 {
             string fileName;
             string dir = Path.GetDirectoryName(listOfFilesFile);
             var gviewer = new GViewer();
-            Form form = FormStuff.CreateForm(gviewer);
+            Form form = FormStuff.CreateOrAttachForm(gviewer, null);
             int nOfBugs = 0;
             while ((fileName = sr.ReadLine()) != null) {
                 if (String.IsNullOrEmpty(fileName)) continue;
@@ -592,7 +581,7 @@ namespace Test01 {
         }
 
         static Form CreateForm(Graph graph, GViewer gviewer) {
-            Form form = FormStuff.CreateForm(gviewer);
+            Form form = FormStuff.CreateOrAttachForm(gviewer, null);
             form.SuspendLayout();
             SetEdgeSeparationBar(form);
 
@@ -710,7 +699,7 @@ namespace Test01 {
         static double GetPaddings(ArgsParser.ArgsParser argsParser, out double loosePadding) {
             double tightPadding = 0.5;
             if (argsParser.OptionIsUsed(TightPaddingOption)) {
-                string tightPaddingString = argsParser.GetValueOfOptionWithAfterString(TightPaddingOption);
+                string tightPaddingString = argsParser.GetStringOptionValue(TightPaddingOption);
                 if (!double.TryParse(tightPaddingString, out tightPadding)) {
                     Console.WriteLine("cannot parse {0} {1}", TightPaddingOption, tightPaddingString);
                     Environment.Exit(1);
@@ -718,7 +707,7 @@ namespace Test01 {
             }
             loosePadding = 2.25;
             if (argsParser.OptionIsUsed(LoosePaddingOption)) {
-                string loosePaddingString = argsParser.GetValueOfOptionWithAfterString(LoosePaddingOption);
+                string loosePaddingString = argsParser.GetStringOptionValue(LoosePaddingOption);
                 if (!double.TryParse(loosePaddingString, out loosePadding)) {
                     Console.WriteLine("cannot parse {0} {1}", LoosePaddingOption, loosePaddingString);
                     Environment.Exit(1);
@@ -803,15 +792,6 @@ namespace Test01 {
         static ICurve CreateEllipse() {
             return CurveFactory.CreateEllipse(20, 10, new Point());
         }
-
-        static ICurve CreateRectangle() {
-            return CurveFactory.CreateRectangle(20, 10, new Point());
-        }
-
-        static ICurve CreateDot() {
-            return CurveFactory.CreateRectangle(5, 5, new Point());
-        }
-
 
         static void TestGraphWithConstraints() {
             var graph = new GeometryGraph();

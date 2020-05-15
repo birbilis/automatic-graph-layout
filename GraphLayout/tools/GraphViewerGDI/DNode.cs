@@ -75,12 +75,6 @@ namespace Microsoft.Msagl.GraphViewerGdi {
             get { return Draw.MsaglColorToDrawingColor(DrawingNode.Attr.FillColor); }
         }
 
-
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
-        internal GLEENode GeometryNode {
-            get { return DrawingNode.GeometryNode; }
-        }
-
         
         #region IHavingDLabel Members
 
@@ -136,7 +130,9 @@ namespace Microsoft.Msagl.GraphViewerGdi {
             }
         }
 
+#pragma warning disable 67
         public event Action<IViewerNode> IsCollapsedChanged;
+#pragma warning restore 67
 
         /// <summary>
         /// returns the corresponding drawing object

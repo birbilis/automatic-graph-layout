@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-﻿using System.Runtime.InteropServices;
+ using System.Runtime.InteropServices;
 ﻿using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
@@ -40,6 +40,7 @@ using Node = Microsoft.Msagl.Drawing.Node;
 using Point = Microsoft.Msagl.Core.Geometry.Point;
 using Shape = Microsoft.Msagl.Drawing.Shape;
 using Size = System.Windows.Size;
+using Microsoft.Msagl.GraphViewerGdi;
 
 namespace TestWpfViewer {
     internal class App : Application {
@@ -162,7 +163,7 @@ namespace TestWpfViewer {
             graphViewer.MouseMove += GraphViewerMouseMove;
             
 
-            var msaglFile = argsParser.GetValueOfOptionWithAfterString(SaveMsaglOption);
+            var msaglFile = argsParser.GetStringOptionValue(SaveMsaglOption);
             if (msaglFile != null)
                 graphViewer.MsaglFileToSave = msaglFile;
             
@@ -333,10 +334,6 @@ namespace TestWpfViewer {
         }
 
 
-        Tuple<string, VoidDelegate>[] ChangeColorDialog(AttributeBase attr) {
-            return new[] {ColorChangeMenuTuple(attr)};
-        }
-
         static Tuple<string, VoidDelegate> ColorChangeMenuTuple(AttributeBase attr) {
             return new Tuple<string, VoidDelegate>("set color", () => {
                 var dialog = new System.Windows.Forms.ColorDialog();
@@ -441,11 +438,11 @@ namespace TestWpfViewer {
 
             _graphViewerIsLoaded = true;
             
-            string fileName = argsParser.GetValueOfOptionWithAfterString(FileOption);
+            string fileName = argsParser.GetStringOptionValue(FileOption);
             if (fileName != null)
                 CreateAndLayoutGraph(fileName);
             else {
-                string fileList = argsParser.GetValueOfOptionWithAfterString(FileListOption);
+                string fileList = argsParser.GetStringOptionValue(FileListOption);
                 if (fileList != null)
                     ProcessFileList(fileList);
             }            
@@ -767,8 +764,8 @@ namespace TestWpfViewer {
 
         void ProcessGraphml(string fileName) {
             var parser = new GraphmlParser(fileName);
-            Microsoft.Msagl.Drawing.Graph graph = parser.Parse();
-            GiveGraphToControl(graph);
+            Graph graph = parser.Parse();
+            PassGraphToControl(graph);
         }
 
         void ProcessMsagl(string fileName) {
@@ -778,7 +775,7 @@ namespace TestWpfViewer {
                 if (argsParser.OptionIsUsed(PrintMaxNodeDegreeOption)) {
                     Console.WriteLine("max node degree {0}",
                         graph.Nodes.Max(n => n.OutEdges.Count() + n.InEdges.Count() + n.SelfEdges.Count()));
-                    System.Environment.Exit(0);
+                    Environment.Exit(0);
                 }
 
 
@@ -787,7 +784,7 @@ namespace TestWpfViewer {
                         n.Attr.XRadius = n.Attr.YRadius = 3;
 
                 if (argsParser.OptionIsUsed(RunRemoveOverlapsOption)) {
-                    OverlapRemoval.RemoveOverlaps(graph.GeometryGraph.Nodes.ToArray(),
+                    GTreeOverlapRemoval.RemoveOverlaps(graph.GeometryGraph.Nodes.ToArray(),
                         graph.LayoutAlgorithmSettings.NodeSeparation);
                 }
             }
@@ -796,7 +793,7 @@ namespace TestWpfViewer {
         }
 
         void GiveGraphToControlFromMsagl(Graph graph) {
-            var fn = argsParser.GetValueOfOptionWithAfterString(SaveMsaglOption);
+            var fn = argsParser.GetStringOptionValue(SaveMsaglOption);
             var oldVal = graphViewer.NeedToCalculateLayout;
             if (fn != null) {
                 graphViewer.NeedToCalculateLayout = true;
@@ -821,9 +818,9 @@ namespace TestWpfViewer {
                 bool layoutExist = dgraph.GeometryGraph != null &&
                                    dgraph.GeometryGraph.Nodes.All(n => n.BoundaryCurve != null) &&
                                    dgraph.GeometryGraph.Nodes.Any(n => n.Center != origin);
-                if (layoutExist && argsParser.GetValueOfOptionWithAfterString(SaveMsaglOption) != null) {
-                    dgraph.Write(argsParser.GetValueOfOptionWithAfterString(SaveMsaglOption));
-                    Console.WriteLine("saved to {0}", argsParser.GetValueOfOptionWithAfterString(SaveMsaglOption));
+                if (layoutExist && argsParser.GetStringOptionValue(SaveMsaglOption) != null) {
+                    dgraph.Write(argsParser.GetStringOptionValue(SaveMsaglOption));
+                    Console.WriteLine("saved to {0}", argsParser.GetStringOptionValue(SaveMsaglOption));
                     Environment.Exit(0);
                 }
 
@@ -874,15 +871,15 @@ namespace TestWpfViewer {
             int line, column;
             string msg;
             Graph gwgraph = Parser.Parse(fileName, out line, out column, out msg);
-            TestGraph(gwgraph);
             if (gwgraph != null) {
-                GiveGraphToControl(gwgraph);
+                TestGraph(gwgraph);
+                PassGraphToControl(gwgraph);
             }
             else
                 MessageBox.Show(msg + String.Format(" line {0} column {1}", line, column));
         }
 
-        void GiveGraphToControl(Graph gwgraph) {
+        void PassGraphToControl(Graph gwgraph) {
             if (argsParser.OptionIsUsed(RoundedCornersOption))
                 foreach (var n in gwgraph.Nodes) {
                     n.Attr.Shape = Shape.Box;
@@ -899,7 +896,7 @@ namespace TestWpfViewer {
                         ProximityOverlapRemoval.RemoveOverlaps(compGraph, gwgraph.LayoutAlgorithmSettings.NodeSeparation);
                         break;
                     case OverlapRemovalMethod.MinimalSpanningTree:
-                        OverlapRemoval.RemoveOverlaps(compGraph.Nodes.ToArray(), gwgraph.LayoutAlgorithmSettings.NodeSeparation);
+                        GTreeOverlapRemoval.RemoveOverlaps(compGraph.Nodes.ToArray(), gwgraph.LayoutAlgorithmSettings.NodeSeparation);
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
@@ -938,7 +935,7 @@ namespace TestWpfViewer {
             else if (mdsIsUsed)
                 gwgraph.LayoutAlgorithmSettings = GetMdsLayoutSettings();
             if (argsParser.OptionIsUsed(NodeSeparationOption)) {
-                var ns = double.Parse(argsParser.GetValueOfOptionWithAfterString(NodeSeparationOption));
+                var ns = double.Parse(argsParser.GetStringOptionValue(NodeSeparationOption));
                 if (ns != 0)
                     gwgraph.LayoutAlgorithmSettings.NodeSeparation = ns;
 

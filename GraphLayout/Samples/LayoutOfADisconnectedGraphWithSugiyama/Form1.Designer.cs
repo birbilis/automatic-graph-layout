@@ -1,4 +1,6 @@
-﻿namespace LayoutOfADisconnectedGraphWithSugiyama {
+﻿using Microsoft.Msagl.GraphViewerGdi;
+
+namespace LayoutOfADisconnectedGraphWithSugiyama {
     partial class Form1 {
         /// <summary>
         /// Required designer variable.
@@ -61,8 +63,6 @@
             this.gViewer1.ToolBarIsVisible = true;
             this.gViewer1.WindowZoomButtonPressed = false;
             this.gViewer1.ZoomF = 1D;
-            this.gViewer1.ZoomFraction = 0.5D;
-            this.gViewer1.ZoomWhenMouseWheelScroll = true;
             this.gViewer1.ZoomWindowThreshold = 0.05D;
             // 
             // Form1
